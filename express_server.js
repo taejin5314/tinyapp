@@ -4,7 +4,15 @@ const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 
 function generateRandomString() {
-  
+  let result = '';
+  let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let charactersLength = characters.length;
+
+  for (let i = 0; i < 6; i++) {
+    result += characters[Math.floor(Math.random() * charactersLength)]
+  }
+
+  return result;
 }
 
 app.use(bodyParser.urlencoded({extended: true}));
@@ -37,6 +45,11 @@ app.get('/urls/new', (req, res) => {
 app.get('/urls/:shortURL', (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
   res.render('urls_show', templateVars);
+})
+
+app.get('/u/:shortURL', (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
 })
 
 app.post("/urls", (req, res) => {
