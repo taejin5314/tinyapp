@@ -39,10 +39,10 @@ const generateRandomString = function () {
   return result;
 }
 
-// email look up helper function
-const emailLookUp = function (email) {
+// Look up helper function
+const lookUp = function (value, field) {
   for (const userId in users) {
-    if (users[userId].email === email) {
+    if (users[userId][field] === value) {
       return true;
     }
   }
@@ -121,7 +121,19 @@ app.post('/urls/:shortURL', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  res.cookie('username', req.body.username).redirect('/urls');
+  for (const userId of users) {
+    if (users[userId].email === req.body.email) {
+      if (users[userId].password === req.body.password) {
+        res.cookie('user_id', userId).redirect('/urls');
+      } else {
+        res.status(403);
+      }
+    } else {
+      res.status(403);
+    }
+  }
+  console.log(req.body);
+  res.redirect('/login')
 });
 
 app.post('/logout', (req, res) => {
@@ -134,7 +146,7 @@ app.post('/register', (req, res) => {
   const userPassword = req.body.password;
   if (!userEmail || !userPassword) {
     res.status(400);
-  } else if (emailLookUp(userEmail)) {
+  } else if (lookUp(userEmail, 'email')) {
     res.status(400);
   } else {
     users[userId] = {
