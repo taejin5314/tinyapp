@@ -31,7 +31,10 @@ app.get("/", (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { 
+    username: req.cookies["username"],
+    urls: urlDatabase
+  };
   res.render("urls_index", templateVars);
 });
 
@@ -71,7 +74,11 @@ app.post('/urls/:shortURL', (req, res) => {
 })
 
 app.post('/login', (req, res) => {
-  res.cookie('username', req.body).redirect('/urls')
+  res.cookie('username', req.body.username).redirect('/urls')
+})
+
+app.post('/logout', (req, res) => {
+  res.clearCookie('username').redirect('/urls');
 })
 
 app.listen(PORT, () => {
