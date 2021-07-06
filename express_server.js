@@ -89,19 +89,18 @@ app.get('/u/:shortURL', (req, res) => {
   res.redirect(longURL);
 });
 
+app.get('/login', (req, res) => {
+  const templateVars = {
+    user: users[req.cookies["user_id"]]
+  }
+  res.render('login', templateVars)
+})
+
 app.get('/register', (req, res) => {
   const templateVars = {
     user: users[req.cookies["user_id"]]
   }
   res.render('register', templateVars)
-})
-
-app.get('/login', (req, res) => {
-  res.render('login')
-})
-
-app.get('/register', (req, res) => {
-  res.render('register')
 })
 
 app.post('/urls', (req, res) => {
@@ -121,9 +120,10 @@ app.post('/urls/:shortURL', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  for (const userId of users) {
+  for (const userId in users) {
     if (users[userId].email === req.body.email) {
       if (users[userId].password === req.body.password) {
+        // console.log(userId);
         res.cookie('user_id', userId).redirect('/urls');
       } else {
         res.status(403);
@@ -132,8 +132,6 @@ app.post('/login', (req, res) => {
       res.status(403);
     }
   }
-  console.log(req.body);
-  res.redirect('/login')
 });
 
 app.post('/logout', (req, res) => {
@@ -156,7 +154,7 @@ app.post('/register', (req, res) => {
     }
     res.cookie('user_id', userId).redirect('/urls');
   }
-  console.log(users);
+  // console.log(users);
 })
 
 app.listen(PORT, () => {
