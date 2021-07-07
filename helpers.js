@@ -12,7 +12,7 @@ const generateRandomString = function() {
 const getUserByEmail = function(email, database) {
   for (const userId in database) {
     if (database[userId].email === email) {
-      return database[userId];
+      return userId;
     }
   }
   return undefined;

@@ -169,7 +169,7 @@ app.post('/urls/:shortURL', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  const loginUser = helpers.getUserByEmail(req.body.email, users);
+  const loginUser = users[helpers.getUserByEmail(req.body.email, users)];
 
   // if loginUser is exist, email is valid
   if (loginUser) {
