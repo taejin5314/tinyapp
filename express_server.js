@@ -73,7 +73,7 @@ const urlsForUser = function(userId) {
     }
   }
   return results;
-}
+};
 
 app.set('view engine', 'ejs');
 
@@ -88,7 +88,7 @@ app.get('/urls', (req, res) => {
     user: users[userCookie],
     urls
   };
-  console.log(templateVars)
+  console.log(templateVars);
   res.render("urls_index", templateVars);
 });
 
@@ -113,10 +113,10 @@ app.get('/urls/new', (req, res) => {
 app.get('/urls/:shortURL', (req, res) => {
   const userCookie = req.cookies["user_id"];
   const userUrl = urlsForUser(userCookie);
-  const currentShortURL = req.params.shortURL
+  const currentShortURL = req.params.shortURL;
   const templateVars = {
     user: users[userCookie]
-  }
+  };
   if (userUrl[currentShortURL].longURL) {
     templateVars.shortURL = currentShortURL;
     templateVars.longURL = urlDatabase[currentShortURL].longURL;
