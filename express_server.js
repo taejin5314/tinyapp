@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
 
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
@@ -25,15 +26,15 @@ const urlDatabase = {
 
 // users database
 const users = {
-  "userRandomID": {
-    id: "userRandomID",
+  "aJ48lW": {
+    id: "aJ48lW",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur"
+    password: bcrypt.hashSync("purple-monkey-dinosaur", 10)
   },
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk"
+    password: bcrypt.hashSync("dishwasher-funk", 10)
   }
 };
 
@@ -88,7 +89,7 @@ app.get('/urls', (req, res) => {
     user: users[userCookie],
     urls
   };
-  console.log(templateVars);
+  console.log(users)
   res.render("urls_index", templateVars);
 });
 
@@ -202,16 +203,22 @@ app.post('/urls/:shortURL', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  let match = false;
+  let emailMatch = false;
+  let passwordMatch = false;
   for (const userId in users) {
     // if the entered password and email is valid,
-    if (users[userId].password === req.body.password && users[userId].email === req.body.email) {
-      match = true;
-      res.cookie('user_id', userId).redirect('/urls');
+    if (users[userId].email === req.body.email) {
+      emailMatch = true;
+      if (bcrypt.compareSync(req.body.password, users[userId].password)) {
+        passwordMatch = true;
+        res.cookie('user_id', userId).redirect('/urls');
+      }
     }
   }
-  if (!match) {
-    res.status(403).send("Error! Please check your email and password");
+  if (!emailMatch) {
+    res.status(403).send("Error! Please check your email!");
+  } else if (!passwordMatch) {
+    res.status(403).send("Error! Please check your password!");
   }
 });
 
@@ -223,7 +230,7 @@ app.post('/logout', (req, res) => {
 app.post('/register', (req, res) => {
   const userId = generateRandomString();
   const userEmail = req.body.email;
-  const userPassword = req.body.password;
+  const userPassword = bcrypt.hashSync(req.body.password, 10);
   if (!userEmail || !userPassword) {
     res.status(400).send('Error! Please enter valid email and password.');
   } else if (lookUp(userEmail, 'email')) {
