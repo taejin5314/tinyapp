@@ -89,7 +89,7 @@ app.get('/urls', (req, res) => {
     user: users[userCookie],
     urls
   };
-  console.log(users)
+  console.log(users);
   res.render("urls_index", templateVars);
 });
 
