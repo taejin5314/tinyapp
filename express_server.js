@@ -274,7 +274,7 @@ app.post('/register', (req, res) => {
 
   // if email or password are empty
   if (!userEmail || !userPassword) {
-    const error = 'Error! Please enter valid email and password.'
+    const error = 'Error! Please enter valid email and password.';
     return res.status(404).render('404_error', {error});
   } else if (helpers.getUserByEmail(userEmail, users)) { // if email already exists
     const error = 'Error! Existing email address.';
