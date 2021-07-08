@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const helpers = require('./helpers');
+const methodOverride = require('method-override');
 
 app.set('trust proxy', 1);
 
@@ -13,6 +14,7 @@ app.use(cookieSession({
   keys: ['key1', 'key2'],
 }));
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(methodOverride('_method'));
 
 const urlDatabase = {
   b6UTxQ: {
@@ -193,7 +195,8 @@ app.post('/urls', (req, res) => {
   }
 });
 
-app.post('/urls/:shortURL/delete', (req, res) => {
+// method override - delete
+app.delete('/urls/:shortURL', (req, res) => {
   const loggedInUser = req.session.user_id;
   const currentShortURL = req.params.shortURL;
 
@@ -210,7 +213,8 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   }
 });
 
-app.post('/urls/:shortURL', (req, res) => {
+// method override - put
+app.put('/urls/:shortURL', (req, res) => {
   // add the shortURL to the database.
   const loggedInUser = req.session.user_id;
   const currentShortURL = req.params.shortURL;
