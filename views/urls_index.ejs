@@ -35,6 +35,10 @@
               <% } %>
             </td>
             <td>
+              Total: <%= urls[url].visits %><br>
+              User: <%= urls[url].visitedUser %>
+            </td>
+            <td>
               <form method="GET" action="/urls/<%= url %>">
                 <button type="submit" class="btn btn-outline-primary">Edit</button>
               </form>
