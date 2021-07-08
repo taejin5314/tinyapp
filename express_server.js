@@ -11,16 +11,6 @@ app.use(cookieSession({
   keys: ['tinyapp'],
 }));
 app.use(bodyParser.urlencoded({extended: true}));
-// middleware to check authentification
-// app.use('/', (req, res, next) => {
-//   const userObject = users[req.session.user_id];
-//   const whiteList = ['/', '/login', '/register'];
-
-//   if (userObject || whiteList.includes(req.path)) {
-//     return next();
-//   }
-//   res.redirect('/')
-// })
 
 const urlDatabase = {
   b6UTxQ: {
@@ -79,7 +69,7 @@ app.get('/urls', (req, res) => {
     };
     return res.render("urls_index", templateVars);
   } else {
-    const error = 'User not found!'
+    const error = 'User not found!';
     return res.render('404_error', {error});
   }
 
@@ -118,21 +108,21 @@ app.get('/urls/:shortURL', (req, res) => {
         templateVars.visits = urlDatabase[currentShortURL].visits++;
         // if the logged in user has never visited the given shortURL,
         if (!urlDatabase[currentShortURL].visitedUser.includes(loggedInUser)) {
-          urlDatabase[currentShortURL].visitedUser.push(bcrypt.hashSync(loggedInUser));
+          urlDatabase[currentShortURL].visitedUser.push(loggedInUser);
         }
         templateVars.visitedUser = urlDatabase[currentShortURL].visitedUser;
         return res.render('urls_show', templateVars);
       } else {
-        const error = "You're not on proper account!";
+        const error = "You are not on the proper account!";
         return res.render('404_error', {error});
       }
     } else {
       const error = "Given short URL does not exist!";
-      return res.render('404_error', {error})
+      return res.render('404_error', {error});
     }
   } else {
     const error = "Please log in!";
-    return res.render('404_error', {error})
+    return res.render('404_error', {error});
   }
 });
 
@@ -143,7 +133,8 @@ app.get('/u/:shortURL', (req, res) => {
       return res.redirect(longURL);
     }
   }
-  return res.status(404).send('Error!');
+  const error = "There is no existing website with given shortURL";
+  return res.render('404_error', {error});
 });
 
 app.get('/login', (req, res) => {
@@ -151,6 +142,8 @@ app.get('/login', (req, res) => {
   const templateVars = {
     user: users[loggedInUser]
   };
+
+  // if user is logged in
   if (loggedInUser) {
     return res.redirect('/urls');
   } else {
@@ -163,6 +156,8 @@ app.get('/register', (req, res) => {
   const templateVars = {
     user: users[loggedInUser]
   };
+
+  // if user is logged in
   if (loggedInUser) {
     return res.redirect('/urls');
   } else {
@@ -174,6 +169,7 @@ app.post('/urls', (req, res) => {
   const loggedInUser = req.session.user_id;
   // if the user is logged in,
   if (loggedInUser) {
+    // generating random short url
     const shortURL = helpers.generateRandomString();
     urlDatabase[shortURL] = {
       longURL: req.body.longURL,
@@ -182,21 +178,27 @@ app.post('/urls', (req, res) => {
       visits: 0,
       visitedUser: []
     };
-    return res.redirect(`/urls`);
+    return res.redirect(`/urls/${shortURL}`);
   } else {
-    return res.status(403).send('Error! Please login to add an url');
+    const error = "Please log in to add url!";
+    return res.render('404_error', {error});
   }
 });
 
 app.post('/urls/:shortURL/delete', (req, res) => {
-  // delete the shortURL from the database.
   const loggedInUser = req.session.user_id;
   const currentShortURL = req.params.shortURL;
+
+  // if the logged in user owns the url
   if (urlDatabase[currentShortURL].userID === loggedInUser) {
     delete urlDatabase[currentShortURL];
     return res.redirect('/urls');
+  } else if (!loggedInUser) {
+    const error = "Please log in!";
+    return res.render('404_error', {error});
   } else {
-    return res.status(403).render('login_required', { user: users[loggedInUser] });
+    const error = "You are not on the proper account!";
+    return res.render('404_error', {error});
   }
 });
 
@@ -206,15 +208,20 @@ app.post('/urls/:shortURL', (req, res) => {
   const currentShortURL = req.params.shortURL;
   const currentLongURL = req.body.longURL;
 
-  // check the logged in user
+  // if the logged in user owns the url
   if (urlDatabase[currentShortURL].userID === loggedInUser) {
+    // updating url info
     urlDatabase[currentShortURL].longURL = currentLongURL;
     urlDatabase[currentShortURL].timestamp = new Date().toLocaleString();
     urlDatabase[currentShortURL].visits = 0;
     urlDatabase[currentShortURL].visitedUser = [];
     return res.redirect('/urls');
+  } else if (!loggedInUser) {
+    const error = 'Please log in!';
+    return res.render('404_error', {error});
   } else {
-    return res.status(403).render('login_required', { user: users[loggedInUser] });
+    const error = 'You are not on the proper account';
+    return res.render('404_error', {error});
   }
 });
 
@@ -231,10 +238,12 @@ app.post('/login', (req, res) => {
       req.session.user_id = loginUser.id;
       return res.redirect('/urls');
     } else {
-      return res.status(403).send("Error! Please check your password!");
+      const error = 'Please check your password!';
+      return res.render('404_error', {error});
     }
   } else {
-    return res.status(403).send("Error! Please check your email!");
+    const error = 'Please check your email!';
+    return res.render('404_error', {error});
   }
 });
 
@@ -251,17 +260,19 @@ app.post('/register', (req, res) => {
   // bcrypt the password
   const userPassword = bcrypt.hashSync(req.body.password, 10);
 
-  // login failed
+  // if email or password are empty
   if (!userEmail || !userPassword) {
     return res.status(400).send('Error! Please enter valid email and password.');
-  } else if (helpers.getUserByEmail(userEmail, users)) {
+  } else if (helpers.getUserByEmail(userEmail, users)) { // if email already exists
     return res.status(400).send('Error! Existing email address.');
-  } else { // login success
+  } else {
+    // create a new user
     users[userId] = {
       id: userId,
       email: userEmail,
       password: userPassword
     };
+    // sets a cookie
     req.session.user_id = userId;
     return res.redirect('/urls');
   }
