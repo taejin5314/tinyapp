@@ -73,8 +73,11 @@ app.get('/urls', (req, res) => {
     };
     return res.render("urls_index", templateVars);
   } else {
-    const error = 'User not found!';
-    return res.status(404).render('404_error', {error});
+    const error = {
+      errorStatus: '404 (Not found)',
+      errorMsg: 'User not found!'
+    }
+    return res.status(404).render('error_page', error);
   }
 
 });
@@ -123,16 +126,25 @@ app.get('/urls/:shortURL', (req, res) => {
         if (!urlDatabase[currentShortURL].visitedUser.includes(loggedInUser)) {
           urlDatabase[currentShortURL].visitedUser.push(loggedInUser);
         }
-        const error = "You are not on the proper account!";
-        return res.status(404).render('404_error', {error});
+        const error = {
+          errorStatus: '404 (Not found)',
+          errorMsg: "You are not on the proper account!"
+        }
+        return res.status(404).render('error_page', error);
       }
     } else {
-      const error = "Given short URL does not exist!";
-      return res.status(404).render('404_error', {error});
+      const error = {
+        errorStatus: '404 (Not found)',
+        errorMsg: "Given short URL does not exist!"
+      }
+      return res.status(404).render('error_page', error);
     }
   } else {
-    const error = "Please log in!";
-    return res.status(404).render('404_error', {error});
+    const error = {
+      errorStatus: '404 (Not found)',
+      errorMsg: "Please log in!"
+    }
+    return res.status(404).render('error_page', error);
   }
 });
 
@@ -143,8 +155,11 @@ app.get('/u/:shortURL', (req, res) => {
       return res.redirect(longURL);
     }
   }
-  const error = "There is no existing website with given shortURL";
-  return res.status(404).render('404_error', {error});
+  const error = {
+    errorStatus: '404 (Not found)',
+    errorMsg: "There is no existing website with given shortURL"
+  }
+  return res.status(404).render('error_page', error);
 });
 
 app.get('/login', (req, res) => {
@@ -190,8 +205,11 @@ app.post('/urls', (req, res) => {
     };
     return res.redirect(`/urls/${shortURL}`);
   } else {
-    const error = "Please log in to add url!";
-    return res.status(404).render('404_error', {error});
+    const error = {
+      errorStatus: '400',
+      errorMsg: "Please log in to add url!"
+    }
+    return res.status(400).render('error_page', error);
   }
 });
 
@@ -205,11 +223,17 @@ app.delete('/urls/:shortURL', (req, res) => {
     delete urlDatabase[currentShortURL];
     return res.redirect('/urls');
   } else if (!loggedInUser) {
-    const error = "Please log in!";
-    return res.status(404).render('404_error', {error});
+    const error = {
+      errorStatus: '400',
+      errorMsg: "Please log in!"
+    }
+    return res.status(400).render('error_page', error);
   } else {
-    const error = "You are not on the proper account!";
-    return res.status(404).render('404_error', {error});
+    const error = {
+      errorStatus: '400',
+      errorMsg:"You are not on the proper account!"
+    }
+    return res.status(400).render('error_page', error);
   }
 });
 
@@ -229,11 +253,17 @@ app.put('/urls/:shortURL', (req, res) => {
     urlDatabase[currentShortURL].visitedUser = [];
     return res.redirect('/urls');
   } else if (!loggedInUser) {
-    const error = 'Please log in!';
-    return res.status(404).render('404_error', {error});
+    const error = {
+      errorStatus: '400',
+      errorMsg: 'Please log in!'
+    };
+    return res.status(400).render('error_page', error);
   } else {
-    const error = 'You are not on the proper account';
-    return res.status(404).render('404_error', {error});
+    const error = {
+      errorStatus: '400',
+      errorMsg: 'You are not on the proper account'
+    }
+    return res.status(400).render('error_page', error);
   }
 });
 
@@ -250,12 +280,18 @@ app.post('/login', (req, res) => {
       req.session.user_id = loginUser.id;
       return res.redirect('/urls');
     } else {
-      const error = 'Please check your password!';
-      return res.status(404).render('404_error', {error});
+      const error = {
+        errorStatus: '400',
+        errorMsg: 'Invalid credentials. Please check your password!'
+      }
+      return res.status(400).render('error_page', error);
     }
   } else {
-    const error = 'Please check your email!';
-    return res.status(404).render('404_error', {error});
+    const error = {
+      errorStatus: '400',
+      errorMsg: 'Invalid credentials. Please check your email!'
+    }
+    return res.status(400).render('error_page', error);
   }
 });
 
@@ -274,11 +310,17 @@ app.post('/register', (req, res) => {
 
   // if email or password are empty
   if (!userEmail || !userPassword) {
-    const error = 'Error! Please enter valid email and password.';
-    return res.status(404).render('404_error', {error});
+    const error = {
+      errorStatus: '400',
+      errorMsg: 'Error! Please enter valid email and password.'
+    }
+    return res.status(400).render('error_page', error);
   } else if (helpers.getUserByEmail(userEmail, users)) { // if email already exists
-    const error = 'Error! Existing email address.';
-    return res.status(404).render('404_error', {error});
+    const error = {
+      errorStatus: '400',
+      errorMsg: 'Error! Existing email address.'
+    }
+    return res.status(400).render('error_page', error);
   } else {
     // create a new user
     users[userId] = {
