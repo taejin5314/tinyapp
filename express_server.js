@@ -26,12 +26,16 @@ const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
     userID: "aJ48lW",
-    timestamp: "2021/07/07"
+    timestamp: "2021/07/07",
+    visits: 0,
+    visitedUser: 0,
   },
   i3BoGr: {
     longURL: "https://www.google.ca",
     userID: "aJ48lW",
-    timestamp: "2021/07/07"
+    timestamp: "2021/07/07",
+    visits: 0,
+    visitedUser: 0,
   }
 };
 
