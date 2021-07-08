@@ -27,7 +27,10 @@ const urlsForUser = function(userId, database) {
     } else {
       results[shortURL] = {
         longURL: undefined,
-        userID: database[shortURL].userID
+        userID: database[shortURL].userID,
+        timestamp: database[shortURL].timestamp,
+        visits: database[shortURL].visits,
+        visitedUser: database[shortURL].visitedUser
       };
     }
   }
