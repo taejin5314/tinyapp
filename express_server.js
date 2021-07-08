@@ -76,7 +76,7 @@ app.get('/urls', (req, res) => {
     const error = {
       errorStatus: '404 (Not found)',
       errorMsg: 'User not found!'
-    }
+    };
     return res.status(404).render('error_page', error);
   }
 
@@ -129,21 +129,21 @@ app.get('/urls/:shortURL', (req, res) => {
         const error = {
           errorStatus: '404 (Not found)',
           errorMsg: "You are not on the proper account!"
-        }
+        };
         return res.status(404).render('error_page', error);
       }
     } else {
       const error = {
         errorStatus: '404 (Not found)',
         errorMsg: "Given short URL does not exist!"
-      }
+      };
       return res.status(404).render('error_page', error);
     }
   } else {
     const error = {
       errorStatus: '404 (Not found)',
       errorMsg: "Please log in!"
-    }
+    };
     return res.status(404).render('error_page', error);
   }
 });
@@ -158,7 +158,7 @@ app.get('/u/:shortURL', (req, res) => {
   const error = {
     errorStatus: '404 (Not found)',
     errorMsg: "There is no existing website with given shortURL"
-  }
+  };
   return res.status(404).render('error_page', error);
 });
 
@@ -208,7 +208,7 @@ app.post('/urls', (req, res) => {
     const error = {
       errorStatus: '400',
       errorMsg: "Please log in to add url!"
-    }
+    };
     return res.status(400).render('error_page', error);
   }
 });
@@ -226,13 +226,13 @@ app.delete('/urls/:shortURL', (req, res) => {
     const error = {
       errorStatus: '400',
       errorMsg: "Please log in!"
-    }
+    };
     return res.status(400).render('error_page', error);
   } else {
     const error = {
       errorStatus: '400',
       errorMsg:"You are not on the proper account!"
-    }
+    };
     return res.status(400).render('error_page', error);
   }
 });
@@ -262,7 +262,7 @@ app.put('/urls/:shortURL', (req, res) => {
     const error = {
       errorStatus: '400',
       errorMsg: 'You are not on the proper account'
-    }
+    };
     return res.status(400).render('error_page', error);
   }
 });
@@ -283,14 +283,14 @@ app.post('/login', (req, res) => {
       const error = {
         errorStatus: '400',
         errorMsg: 'Invalid credentials. Please check your password!'
-      }
+      };
       return res.status(400).render('error_page', error);
     }
   } else {
     const error = {
       errorStatus: '400',
       errorMsg: 'Invalid credentials. Please check your email!'
-    }
+    };
     return res.status(400).render('error_page', error);
   }
 });
@@ -313,13 +313,13 @@ app.post('/register', (req, res) => {
     const error = {
       errorStatus: '400',
       errorMsg: 'Error! Please enter valid email and password.'
-    }
+    };
     return res.status(400).render('error_page', error);
   } else if (helpers.getUserByEmail(userEmail, users)) { // if email already exists
     const error = {
       errorStatus: '400',
       errorMsg: 'Error! Existing email address.'
-    }
+    };
     return res.status(400).render('error_page', error);
   } else {
     // create a new user
