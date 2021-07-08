@@ -105,7 +105,7 @@ app.get('/urls/:shortURL', (req, res) => {
         templateVars.shortURL = currentShortURL;
         templateVars.longURL = urlDatabase[currentShortURL].longURL;
         templateVars.timestamp = urlDatabase[currentShortURL].timestamp;
-        templateVars.visits = urlDatabase[currentShortURL].visits++;
+        templateVars.visits = ++urlDatabase[currentShortURL].visits;
         // if the logged in user has never visited the given shortURL,
         if (!urlDatabase[currentShortURL].visitedUser.includes(loggedInUser)) {
           urlDatabase[currentShortURL].visitedUser.push(loggedInUser);
