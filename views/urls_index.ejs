@@ -31,13 +31,16 @@
               <td>
                 <% if (urls[url].longURL) { %>
                 <%= urls[url].longURL %>
-                <% } else { %>s
+                <% } else { %>
                   *******************************
                 <% } %>
               </td>
               <td>
+                <%= urls[url].timestamp %>
+              </td>
+              <td>
                 Total: <%= urls[url].visits %><br>
-                User: <%= urls[url].visitedUser %>
+                User: <%= urls[url].visitedUser.length %>
               </td>
               <td>
                 <form method="GET" action="/urls/<%= url %>">

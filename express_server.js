@@ -26,16 +26,16 @@ const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
     userID: "aJ48lW",
-    timestamp: "2021/07/07",
+    timestamp: "7/8/2021, 5:55:55 PM",
     visits: 0,
-    visitedUser: 0,
+    visitedUser: [],
   },
   i3BoGr: {
     longURL: "https://www.google.ca",
     userID: "aJ48lW",
-    timestamp: "2021/07/07",
+    timestamp: "7/8/2021, 2:22:22 PM",
     visits: 0,
-    visitedUser: 0,
+    visitedUser: [],
   }
 };
 
@@ -56,10 +56,10 @@ const users = {
 app.set('view engine', 'ejs');
 
 app.get("/", (req, res) => {
-  const userLoginCookie = req.session.user_id;
+  const loggedInUser = req.session.user_id;
 
   // if logged in
-  if (userLoginCookie) {
+  if (loggedInUser) {
     return res.redirect('/urls');
   } else { // if not logged in
     return res.redirect('/login');
@@ -67,14 +67,14 @@ app.get("/", (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
-  const userLoginCookie = req.session.user_id;
+  const loggedInUser = req.session.user_id;
 
   // if the user logged in,
-  if (userLoginCookie) {
+  if (loggedInUser) {
     // find the user urls from the database
-    const urls = helpers.urlsForUser(userLoginCookie, urlDatabase);
+    const urls = helpers.urlsForUser(loggedInUser, urlDatabase);
     const templateVars = {
-      user: users[userLoginCookie],
+      user: users[loggedInUser],
       urls
     };
     return res.render("urls_index", templateVars);
@@ -86,12 +86,12 @@ app.get('/urls', (req, res) => {
 });
 
 app.get('/urls/new', (req, res) => {
-  const userLoginCookie = req.session.user_id;
+  const loggedInUser = req.session.user_id;
   const templateVars = {
-    user: users[userLoginCookie]
+    user: users[loggedInUser]
   };
   // check the cookie
-  if (userLoginCookie) {
+  if (loggedInUser) {
     return res.render('urls_new', templateVars);
   } else {
     return res.redirect('/login');
@@ -99,18 +99,40 @@ app.get('/urls/new', (req, res) => {
 });
 
 app.get('/urls/:shortURL', (req, res) => {
-  const userLoginCookie = req.session.user_id;
-  const userUrl = helpers.urlsForUser(userLoginCookie, urlDatabase);
+  const loggedInUser = req.session.user_id;
+  const userUrl = helpers.urlsForUser(loggedInUser, urlDatabase);
   const currentShortURL = req.params.shortURL;
   const templateVars = {
-    user: users[userLoginCookie]
+    user: users[loggedInUser]
   };
-  if (userUrl[currentShortURL].longURL) {
-    templateVars.shortURL = currentShortURL;
-    templateVars.longURL = urlDatabase[currentShortURL].longURL;
-    return res.render('urls_show', templateVars);
+
+  // if the user logged in
+  if (loggedInUser) {
+    // if the given shortURL is in database
+    if (urlDatabase && Object.keys(urlDatabase).includes(currentShortURL)) {
+      // if the user url database has the given shortURL
+      if (userUrl[currentShortURL].longURL) {
+        templateVars.shortURL = currentShortURL;
+        templateVars.longURL = urlDatabase[currentShortURL].longURL;
+        templateVars.timestamp = urlDatabase[currentShortURL].timestamp;
+        templateVars.visits = urlDatabase[currentShortURL].visits++;
+        // if the logged in user has never visited the given shortURL,
+        if (!urlDatabase[currentShortURL].visitedUser.includes(loggedInUser)) {
+          urlDatabase[currentShortURL].visitedUser.push(bcrypt.hashSync(loggedInUser));
+        }
+        templateVars.visitedUser = urlDatabase[currentShortURL].visitedUser;
+        return res.render('urls_show', templateVars);
+      } else {
+        const error = "You're not on proper account!";
+        return res.render('404_error', {error});
+      }
+    } else {
+      const error = "Given short URL does not exist!";
+      return res.render('404_error', {error})
+    }
   } else {
-    return res.render('login_required', templateVars);
+    const error = "Please log in!";
+    return res.render('404_error', {error})
   }
 });
 
@@ -125,11 +147,11 @@ app.get('/u/:shortURL', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-  const userLoginCookie = req.session.user_id;
+  const loggedInUser = req.session.user_id;
   const templateVars = {
-    user: users[userLoginCookie]
+    user: users[loggedInUser]
   };
-  if (userLoginCookie) {
+  if (loggedInUser) {
     return res.redirect('/urls');
   } else {
     return res.render('login', templateVars);
@@ -137,11 +159,11 @@ app.get('/login', (req, res) => {
 });
 
 app.get('/register', (req, res) => {
-  const userLoginCookie = req.session.user_id;
+  const loggedInUser = req.session.user_id;
   const templateVars = {
-    user: users[userLoginCookie]
+    user: users[loggedInUser]
   };
-  if (userLoginCookie) {
+  if (loggedInUser) {
     return res.redirect('/urls');
   } else {
     return res.render('register', templateVars);
@@ -149,15 +171,18 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/urls', (req, res) => {
-  const userLoginCookie = req.session.user_id;
+  const loggedInUser = req.session.user_id;
   // if the user is logged in,
-  if (userLoginCookie) {
+  if (loggedInUser) {
     const shortURL = helpers.generateRandomString();
     urlDatabase[shortURL] = {
       longURL: req.body.longURL,
-      userID: userLoginCookie
+      userID: loggedInUser,
+      timestamp: new Date().toLocaleString(),
+      visits: 0,
+      visitedUser: []
     };
-    return res.redirect(`/urls/${shortURL}`);
+    return res.redirect(`/urls`);
   } else {
     return res.status(403).send('Error! Please login to add an url');
   }
@@ -165,26 +190,31 @@ app.post('/urls', (req, res) => {
 
 app.post('/urls/:shortURL/delete', (req, res) => {
   // delete the shortURL from the database.
-  const userLoginCookie = req.session.user_id;
+  const loggedInUser = req.session.user_id;
   const currentShortURL = req.params.shortURL;
-  if (urlDatabase[currentShortURL].userID === userLoginCookie) {
+  if (urlDatabase[currentShortURL].userID === loggedInUser) {
     delete urlDatabase[currentShortURL];
     return res.redirect('/urls');
   } else {
-    return res.status(403).render('login_required', { user: users[userLoginCookie] });
+    return res.status(403).render('login_required', { user: users[loggedInUser] });
   }
 });
 
 app.post('/urls/:shortURL', (req, res) => {
   // add the shortURL to the database.
-  const userLoginCookie = req.session.user_id;
+  const loggedInUser = req.session.user_id;
   const currentShortURL = req.params.shortURL;
   const currentLongURL = req.body.longURL;
-  if (urlDatabase[currentShortURL].userID === userLoginCookie) {
+
+  // check the logged in user
+  if (urlDatabase[currentShortURL].userID === loggedInUser) {
     urlDatabase[currentShortURL].longURL = currentLongURL;
+    urlDatabase[currentShortURL].timestamp = new Date().toLocaleString();
+    urlDatabase[currentShortURL].visits = 0;
+    urlDatabase[currentShortURL].visitedUser = [];
     return res.redirect('/urls');
   } else {
-    return res.status(403).render('login_required', { user: users[userLoginCookie] });
+    return res.status(403).render('login_required', { user: users[loggedInUser] });
   }
 });
 
