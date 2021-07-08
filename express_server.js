@@ -6,9 +6,11 @@ const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const helpers = require('./helpers');
 
+app.set('trust proxy', 1);
+
 app.use(cookieSession({
   name: 'session',
-  keys: ['tinyapp'],
+  keys: ['key1', 'key2'],
 }));
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -80,6 +82,7 @@ app.get('/urls/new', (req, res) => {
   const templateVars = {
     user: users[loggedInUser]
   };
+
   // check the cookie
   if (loggedInUser) {
     return res.render('urls_new', templateVars);
@@ -113,6 +116,11 @@ app.get('/urls/:shortURL', (req, res) => {
         templateVars.visitedUser = urlDatabase[currentShortURL].visitedUser;
         return res.render('urls_show', templateVars);
       } else {
+        // even the user doesn't own the url, it will increase visits and visitedUser
+        urlDatabase[currentShortURL].visits++;
+        if (!urlDatabase[currentShortURL].visitedUser.includes(loggedInUser)) {
+          urlDatabase[currentShortURL].visitedUser.push(loggedInUser);
+        }
         const error = "You are not on the proper account!";
         return res.render('404_error', {error});
       }
@@ -249,7 +257,7 @@ app.post('/login', (req, res) => {
 
 app.post('/logout', (req, res) => {
   // click logout btn => clear the cookies
-  req.session.user_id = null;
+  req.session = null;
   return res.redirect('/urls');
 });
 
