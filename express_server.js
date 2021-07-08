@@ -127,7 +127,7 @@ app.get('/urls/:shortURL', (req, res) => {
           urlDatabase[currentShortURL].visitedUser.push(loggedInUser);
         }
         const error = {
-          errorStatus: '404 (Not found)',
+          errorStatus: '400 error',
           errorMsg: "You are not on the proper account!"
         };
         return res.status(404).render('error_page', error);
@@ -141,7 +141,7 @@ app.get('/urls/:shortURL', (req, res) => {
     }
   } else {
     const error = {
-      errorStatus: '404 (Not found)',
+      errorStatus: '400 error',
       errorMsg: "Please log in!"
     };
     return res.status(404).render('error_page', error);
@@ -206,7 +206,7 @@ app.post('/urls', (req, res) => {
     return res.redirect(`/urls/${shortURL}`);
   } else {
     const error = {
-      errorStatus: '400',
+      errorStatus: '400 error',
       errorMsg: "Please log in to add url!"
     };
     return res.status(400).render('error_page', error);
@@ -224,13 +224,13 @@ app.delete('/urls/:shortURL', (req, res) => {
     return res.redirect('/urls');
   } else if (!loggedInUser) {
     const error = {
-      errorStatus: '400',
+      errorStatus: '400 error',
       errorMsg: "Please log in!"
     };
     return res.status(400).render('error_page', error);
   } else {
     const error = {
-      errorStatus: '400',
+      errorStatus: '400 error',
       errorMsg:"You are not on the proper account!"
     };
     return res.status(400).render('error_page', error);
@@ -254,13 +254,13 @@ app.put('/urls/:shortURL', (req, res) => {
     return res.redirect('/urls');
   } else if (!loggedInUser) {
     const error = {
-      errorStatus: '400',
+      errorStatus: '400 error',
       errorMsg: 'Please log in!'
     };
     return res.status(400).render('error_page', error);
   } else {
     const error = {
-      errorStatus: '400',
+      errorStatus: '400 error',
       errorMsg: 'You are not on the proper account'
     };
     return res.status(400).render('error_page', error);
@@ -281,14 +281,14 @@ app.post('/login', (req, res) => {
       return res.redirect('/urls');
     } else {
       const error = {
-        errorStatus: '400',
+        errorStatus: '400 error',
         errorMsg: 'Invalid credentials. Please check your password!'
       };
       return res.status(400).render('error_page', error);
     }
   } else {
     const error = {
-      errorStatus: '400',
+      errorStatus: '400 error',
       errorMsg: 'Invalid credentials. Please check your email!'
     };
     return res.status(400).render('error_page', error);
@@ -306,18 +306,18 @@ app.post('/register', (req, res) => {
   const userId = helpers.generateRandomString();
   const userEmail = req.body.email;
   // bcrypt the password
-  const userPassword = bcrypt.hashSync(req.body.password, 10);
+  const userPassword = req.body.password;
 
   // if email or password are empty
   if (!userEmail || !userPassword) {
     const error = {
-      errorStatus: '400',
+      errorStatus: '400 error',
       errorMsg: 'Error! Please enter valid email and password.'
     };
     return res.status(400).render('error_page', error);
   } else if (helpers.getUserByEmail(userEmail, users)) { // if email already exists
     const error = {
-      errorStatus: '400',
+      errorStatus: '400 error',
       errorMsg: 'Error! Existing email address.'
     };
     return res.status(400).render('error_page', error);
@@ -326,7 +326,7 @@ app.post('/register', (req, res) => {
     users[userId] = {
       id: userId,
       email: userEmail,
-      password: userPassword
+      password: bcrypt.hashSync(userPassword, 10)
     };
     // sets a cookie
     req.session.user_id = userId;
