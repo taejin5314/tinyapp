@@ -156,7 +156,7 @@ app.get('/login', (req, res) => {
   };
 
   // if user is logged in
-  if (getUserByID(loggedInUser)) {
+  if (getUserByID(loggedInUser, users)) {
     return res.redirect('/urls');
   } else {
     return res.render('login', templateVars);
@@ -171,7 +171,7 @@ app.get('/register', (req, res) => {
   };
 
   // if user is logged in
-  if (getUserByID(loggedInUser)) {
+  if (getUserByID(loggedInUser, users)) {
     return res.redirect('/urls');
   } else {
     return res.render('register', templateVars);
