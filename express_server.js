@@ -58,7 +58,7 @@ app.get("/", (req, res) => {
   // if logged in
   if (loggedInUser) {
     return res.redirect('/urls');
-  } else { // if not logged in
+  } else {
     return res.redirect('/login');
   }
 });
@@ -101,6 +101,7 @@ app.get('/urls/:shortURL', (req, res) => {
   const loggedInUser = req.session.userID;
   const userUrl = urlsForUser(loggedInUser, urlDatabase);
   const currentShortURL = req.params.shortURL;
+  const currentURL = urlDatabase[currentShortURL];
   const templateVars = {
     user: users[loggedInUser]
   };
@@ -109,23 +110,23 @@ app.get('/urls/:shortURL', (req, res) => {
   if (loggedInUser) {
     // if the given shortURL is in database
     if (urlDatabase && Object.keys(urlDatabase).includes(currentShortURL)) {
-      // if the user url database has the given shortURL
+      // if the url database has the given shortURL
       if (userUrl[currentShortURL].longURL) {
         templateVars.shortURL = currentShortURL;
-        templateVars.longURL = urlDatabase[currentShortURL].longURL;
-        templateVars.timestamp = urlDatabase[currentShortURL].timestamp;
-        templateVars.visits = ++urlDatabase[currentShortURL].visits;
+        templateVars.longURL = currentURL.longURL;
+        templateVars.timestamp = currentURL.timestamp;
+        templateVars.visits = ++currentURL.visits;
         // if the logged in user has never visited the given shortURL,
-        if (!urlDatabase[currentShortURL].visitedUser.includes(loggedInUser)) {
-          urlDatabase[currentShortURL].visitedUser.push(loggedInUser);
+        if (!currentURL.visitedUser.includes(loggedInUser)) {
+          currentURL.visitedUser.push(loggedInUser);
         }
-        templateVars.visitedUser = urlDatabase[currentShortURL].visitedUser;
+        templateVars.visitedUser = currentURL.visitedUser;
         return res.render('urls_show', templateVars);
       } else {
         // even the user doesn't own the url, it will increase visits and visitedUser
-        urlDatabase[currentShortURL].visits++;
-        if (!urlDatabase[currentShortURL].visitedUser.includes(loggedInUser)) {
-          urlDatabase[currentShortURL].visitedUser.push(loggedInUser);
+        currentURL.visits++;
+        if (!currentURL.visitedUser.includes(loggedInUser)) {
+          currentURL.visitedUser.push(loggedInUser);
         }
         return res.status(401).send('<h1>401 - You are not authorized!</h1><a href="/">Go back</a>');
       }
