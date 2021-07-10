@@ -221,14 +221,15 @@ app.put('/urls/:shortURL', (req, res) => {
   const loggedInUser = req.session.userID;
   const currentShortURL = req.params.shortURL;
   const currentLongURL = req.body.longURL;
+  const currentURL = urlDatabase[currentShortURL];
 
   // if the logged in user owns the url
-  if (urlDatabase[currentShortURL] && urlDatabase[currentShortURL].userID === loggedInUser) {
+  if (currentURL && currentURL.userID === loggedInUser) {
     // updating url info
-    urlDatabase[currentShortURL].longURL = currentLongURL;
-    urlDatabase[currentShortURL].timestamp = new Date().toLocaleString();
-    urlDatabase[currentShortURL].visits = 0;
-    urlDatabase[currentShortURL].visitedUser = [];
+    currentURL.longURL = currentLongURL;
+    currentURL.timestamp = new Date().toLocaleString();
+    currentURL.visits = 0;
+    currentURL.visitedUser = [];
     return res.redirect('/urls');
   } else if (!loggedInUser) {
     return res.status(401).send('<h1>401 - Please log in!</h1><a href="/">Go back</a>');
