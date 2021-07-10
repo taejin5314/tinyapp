@@ -4,18 +4,20 @@ const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
-const helpers = require('./helpers');
+const {generateRandomString, getUserByEmail, getUserByID, urlsForUser} = require('./helpers');
 const methodOverride = require('method-override');
 
 app.set('trust proxy', 1);
 
+// cookie session
 app.use(cookieSession({
   name: 'session',
-  keys: ['key1', 'key2'],
+  keys: ['taejin'],
 }));
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(methodOverride('_method'));
 
+// urls database
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
@@ -49,8 +51,9 @@ const users = {
 
 app.set('view engine', 'ejs');
 
+// home page
 app.get("/", (req, res) => {
-  const loggedInUser = req.session.user_id;
+  const loggedInUser = req.session.userID;
 
   // if logged in
   if (loggedInUser) {
@@ -60,30 +63,27 @@ app.get("/", (req, res) => {
   }
 });
 
+// url pages
 app.get('/urls', (req, res) => {
-  const loggedInUser = req.session.user_id;
+  const loggedInUser = req.session.userID;
 
   // if the user logged in,
   if (loggedInUser) {
     // find the user urls from the database
-    const urls = helpers.urlsForUser(loggedInUser, urlDatabase);
+    const urls = urlsForUser(loggedInUser, urlDatabase);
     const templateVars = {
       user: users[loggedInUser],
       urls
     };
     return res.render("urls_index", templateVars);
   } else {
-    const error = {
-      errorStatus: '404 (Not found)',
-      errorMsg: 'User not found!'
-    };
-    return res.status(404).render('error_page', error);
+    return res.status(401).send('<h1>401 - You are not authorized!</h1><a href="/">Go back</a>');
   }
-
 });
 
+// create new URL
 app.get('/urls/new', (req, res) => {
-  const loggedInUser = req.session.user_id;
+  const loggedInUser = req.session.userID;
   const templateVars = {
     user: users[loggedInUser]
   };
@@ -96,9 +96,10 @@ app.get('/urls/new', (req, res) => {
   }
 });
 
+// URL edit page
 app.get('/urls/:shortURL', (req, res) => {
-  const loggedInUser = req.session.user_id;
-  const userUrl = helpers.urlsForUser(loggedInUser, urlDatabase);
+  const loggedInUser = req.session.userID;
+  const userUrl = urlsForUser(loggedInUser, urlDatabase);
   const currentShortURL = req.params.shortURL;
   const templateVars = {
     user: users[loggedInUser]
@@ -126,28 +127,17 @@ app.get('/urls/:shortURL', (req, res) => {
         if (!urlDatabase[currentShortURL].visitedUser.includes(loggedInUser)) {
           urlDatabase[currentShortURL].visitedUser.push(loggedInUser);
         }
-        const error = {
-          errorStatus: '400 error',
-          errorMsg: "You are not on the proper account!"
-        };
-        return res.status(404).render('error_page', error);
+        return res.status(401).send('<h1>401 - You are not authorized!</h1><a href="/">Go back</a>');
       }
     } else {
-      const error = {
-        errorStatus: '404 (Not found)',
-        errorMsg: "Given short URL does not exist!"
-      };
-      return res.status(404).render('error_page', error);
+      return res.status(404).send('<h1>404 - Given short url does not exist!</h1><a href="/">Go back</a>');
     }
   } else {
-    const error = {
-      errorStatus: '400 error',
-      errorMsg: "Please log in!"
-    };
-    return res.status(404).render('error_page', error);
+    return res.status(401).send('<h1>401 - Please log in!</h1><a href="/">Go back</a>');
   }
 });
 
+// link to longURL
 app.get('/u/:shortURL', (req, res) => {
   for (const shortURL in urlDatabase) {
     if (shortURL === req.params.shortURL) {
@@ -155,47 +145,46 @@ app.get('/u/:shortURL', (req, res) => {
       return res.redirect(longURL);
     }
   }
-  const error = {
-    errorStatus: '404 (Not found)',
-    errorMsg: "There is no existing website with given shortURL"
-  };
-  return res.status(404).render('error_page', error);
+  return res.status(404).send('<h1>404 - URL does not exist!</h1><a href="/">Go back</a>');
 });
 
+// login page
 app.get('/login', (req, res) => {
-  const loggedInUser = req.session.user_id;
+  const loggedInUser = req.session.userID;
   const templateVars = {
     user: users[loggedInUser]
   };
 
   // if user is logged in
-  if (loggedInUser) {
+  if (getUserByID(loggedInUser)) {
     return res.redirect('/urls');
   } else {
     return res.render('login', templateVars);
   }
 });
 
+// registration
 app.get('/register', (req, res) => {
-  const loggedInUser = req.session.user_id;
+  const loggedInUser = req.session.userID;
   const templateVars = {
     user: users[loggedInUser]
   };
 
   // if user is logged in
-  if (loggedInUser) {
+  if (getUserByID(loggedInUser)) {
     return res.redirect('/urls');
   } else {
     return res.render('register', templateVars);
   }
 });
 
+// post a new url
 app.post('/urls', (req, res) => {
-  const loggedInUser = req.session.user_id;
+  const loggedInUser = req.session.userID;
   // if the user is logged in,
   if (loggedInUser) {
     // generating random short url
-    const shortURL = helpers.generateRandomString();
+    const shortURL = generateRandomString();
     urlDatabase[shortURL] = {
       longURL: req.body.longURL,
       userID: loggedInUser,
@@ -205,17 +194,13 @@ app.post('/urls', (req, res) => {
     };
     return res.redirect(`/urls/${shortURL}`);
   } else {
-    const error = {
-      errorStatus: '400 error',
-      errorMsg: "Please log in to add url!"
-    };
-    return res.status(400).render('error_page', error);
+    return res.status(401).send('<h1>401 - You must log in to create url!</h1><a href="/">Go back</a>');
   }
 });
 
 // method override - delete
 app.delete('/urls/:shortURL', (req, res) => {
-  const loggedInUser = req.session.user_id;
+  const loggedInUser = req.session.userID;
   const currentShortURL = req.params.shortURL;
 
   // if the logged in user owns the url
@@ -223,24 +208,16 @@ app.delete('/urls/:shortURL', (req, res) => {
     delete urlDatabase[currentShortURL];
     return res.redirect('/urls');
   } else if (!loggedInUser) {
-    const error = {
-      errorStatus: '400 error',
-      errorMsg: "Please log in!"
-    };
-    return res.status(400).render('error_page', error);
+    return res.status(401).send('<h1>401 - Please log in!</h1><a href="/">Go back</a>');
   } else {
-    const error = {
-      errorStatus: '400 error',
-      errorMsg:"You are not on the proper account!"
-    };
-    return res.status(400).render('error_page', error);
+    return res.status(401).send('<h1>401 - You are not authorized!</h1><a href="/">Go back</a>');
   }
 });
 
 // method override - put
 app.put('/urls/:shortURL', (req, res) => {
   // add the shortURL to the database.
-  const loggedInUser = req.session.user_id;
+  const loggedInUser = req.session.userID;
   const currentShortURL = req.params.shortURL;
   const currentLongURL = req.body.longURL;
 
@@ -253,83 +230,62 @@ app.put('/urls/:shortURL', (req, res) => {
     urlDatabase[currentShortURL].visitedUser = [];
     return res.redirect('/urls');
   } else if (!loggedInUser) {
-    const error = {
-      errorStatus: '400 error',
-      errorMsg: 'Please log in!'
-    };
-    return res.status(400).render('error_page', error);
+    return res.status(401).send('<h1>401 - Please log in!</h1><a href="/">Go back</a>');
   } else {
-    const error = {
-      errorStatus: '400 error',
-      errorMsg: 'You are not on the proper account'
-    };
-    return res.status(400).render('error_page', error);
+    return res.status(401).send('<h1>401 - You are not authorized!</h1><a href="/">Go back</a>');
   }
 });
 
+// login page
 app.post('/login', (req, res) => {
   // Extract relevant data
   const { email, password } = req.body;
-  const loginUser = users[helpers.getUserByEmail(email, users)];
+  const loginUser = users[getUserByEmail(email, users)];
 
   // if loginUser is exist, email is valid
   if (loginUser) {
     // password check
     if (bcrypt.compareSync(password, loginUser.password)) {
       // create a cookie
-      req.session.user_id = loginUser.id;
+      req.session.userID = loginUser.id;
       return res.redirect('/urls');
     } else {
-      const error = {
-        errorStatus: '400 error',
-        errorMsg: 'Invalid credentials. Please check your password!'
-      };
-      return res.status(400).render('error_page', error);
+      return res.status(400).send('<h1>400 - Invalid credentials. Please check your password!</h1><a href="/">Go back</a>');
     }
   } else {
-    const error = {
-      errorStatus: '400 error',
-      errorMsg: 'Invalid credentials. Please check your email!'
-    };
-    return res.status(400).render('error_page', error);
+    return res.status(400).send('<h1>400 - Invalid credential. Please check your email!</h1><a href="/">Go back</a>');
   }
 });
 
+// logout
 app.post('/logout', (req, res) => {
   // click logout btn => clear the cookies
   req.session = null;
   return res.redirect('/urls');
 });
 
+// create an account
 app.post('/register', (req, res) => {
   // generate a random string
-  const userId = helpers.generateRandomString();
+  const userID = generateRandomString();
   const userEmail = req.body.email;
   // bcrypt the password
   const userPassword = req.body.password;
 
   // if email or password are empty
   if (!userEmail || !userPassword) {
-    const error = {
-      errorStatus: '400 error',
-      errorMsg: 'Error! Please enter valid email and password.'
-    };
-    return res.status(400).render('error_page', error);
-  } else if (helpers.getUserByEmail(userEmail, users)) { // if email already exists
-    const error = {
-      errorStatus: '400 error',
-      errorMsg: 'Error! Existing email address.'
-    };
-    return res.status(400).render('error_page', error);
+    return res.status(400).send('<h1>400 - Please enter valid email and password!</h1><a href="/">Go back</a>');
+  } else if (getUserByEmail(userEmail, users)) { // if email already exists
+    return res.status(400).send('<h1>400 - Email is already in use!</h1><a href="/">Go back</a>');
   } else {
     // create a new user
-    users[userId] = {
-      id: userId,
+    users[userID] = {
+      id: userID,
       email: userEmail,
       password: bcrypt.hashSync(userPassword, 10)
     };
     // sets a cookie
-    req.session.user_id = userId;
+    req.session.userID = userID;
     return res.redirect('/urls');
   }
 });
