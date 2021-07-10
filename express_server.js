@@ -56,7 +56,7 @@ app.get("/", (req, res) => {
   const loggedInUser = req.session.userID;
 
   // if logged in
-  if (loggedInUser) {
+  if (getUserByID(loggedInUser, users)) {
     return res.redirect('/urls');
   } else {
     return res.redirect('/login');
@@ -68,7 +68,7 @@ app.get('/urls', (req, res) => {
   const loggedInUser = req.session.userID;
 
   // if the user logged in,
-  if (loggedInUser) {
+  if (getUserByID(loggedInUser, users)) {
     // find the user urls from the database
     const urls = urlsForUser(loggedInUser, urlDatabase);
     const templateVars = {
@@ -89,7 +89,7 @@ app.get('/urls/new', (req, res) => {
   };
 
   // check the cookie
-  if (loggedInUser) {
+  if (getUserByID(loggedInUser, users)) {
     return res.render('urls_new', templateVars);
   } else {
     return res.redirect('/login');
@@ -107,7 +107,7 @@ app.get('/urls/:shortURL', (req, res) => {
   };
 
   // if the user logged in
-  if (loggedInUser) {
+  if (getUserByID(loggedInUser, users)) {
     // if the given shortURL is in database
     if (urlDatabase && Object.keys(urlDatabase).includes(currentShortURL)) {
       // if the url database has the given shortURL
@@ -183,7 +183,7 @@ app.get('/register', (req, res) => {
 app.post('/urls', (req, res) => {
   const loggedInUser = req.session.userID;
   // if the user is logged in,
-  if (loggedInUser) {
+  if (getUserByID(loggedInUser, users)) {
     // generating random short url
     const shortURL = generateRandomString();
     urlDatabase[shortURL] = {
@@ -208,7 +208,7 @@ app.delete('/urls/:shortURL', (req, res) => {
   if (urlDatabase[currentShortURL].userID === loggedInUser) {
     delete urlDatabase[currentShortURL];
     return res.redirect('/urls');
-  } else if (!loggedInUser) {
+  } else if (!getUserByID(loggedInUser, users)) {
     return res.status(401).send('<h1>401 - Please log in!</h1><a href="/">Go back</a>');
   } else {
     return res.status(401).send('<h1>401 - You are not authorized!</h1><a href="/">Go back</a>');
@@ -231,7 +231,7 @@ app.put('/urls/:shortURL', (req, res) => {
     currentURL.visits = 0;
     currentURL.visitedUser = [];
     return res.redirect('/urls');
-  } else if (!loggedInUser) {
+  } else if (!getUserByID(loggedInUser, users)) {
     return res.status(401).send('<h1>401 - Please log in!</h1><a href="/">Go back</a>');
   } else {
     return res.status(401).send('<h1>401 - You are not authorized!</h1><a href="/">Go back</a>');
