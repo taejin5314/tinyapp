@@ -128,7 +128,7 @@ app.get('/urls/:shortURL', (req, res) => {
         if (!currentURL.visitedUser.includes(loggedInUser)) {
           currentURL.visitedUser.push(loggedInUser);
         }
-        return res.status(401).send('<h1>401 - You are not authorized!</h1><a href="/">Go back</a>');
+        return res.status(401).send('<h1>400 - URL does not exist!</h1><a href="/">Go back</a>');
       }
     } else {
       return res.status(404).send('<h1>404 - Given short url does not exist!</h1><a href="/">Go back</a>');
